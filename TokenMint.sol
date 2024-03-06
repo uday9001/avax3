@@ -1,63 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract ERC20 {
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-    address public owner;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-    mapping(address => uint256) public balanceOf;
+contract SpecialContract is ERC20 {
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    mapping(address=>uint256) balance;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function");
-        _;
+    event TranferedTo (uint256 indexed _value, address indexed _to);
+
+    constructor(string memory _tokenName, string memory _symbol, uint256 _initialSupply) ERC20(_tokenName, _symbol) {
+        _mint(msg.sender, _initialSupply);
     }
 
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals,
-        uint256 _initialSupply
-    ) {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-        totalSupply = _initialSupply * (10**uint256(_decimals));
-        balanceOf[msg.sender] = totalSupply;
-        owner = msg.sender;
-        emit Transfer(address(0), msg.sender, totalSupply);
+     function mint(address account, uint256 amount) external  {
+        _mint(account, amount);
     }
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(_to != address(0), "Invalid address");
-        require(balanceOf[msg.sender] >= _value, "Insufficient balance");
+    
+    //function to enable transfer from the contract including a service fee of 10%
+    function transferToken(uint256 _value, address _to) public returns(uint256){
+        // uint256 coinSupply = totalSupply;
+        require(balance[msg.sender] > _value, "You dont have enough SCT tokens in your account");
+        require(_value > 0, "token amount must be greater than zero");
+        require(msg.sender != address(0), "Check this address again. You cannnot send to this address!"); // performing a sanity check
+        uint256 serviceFee = _value /10;
+        balance[msg.sender] = balance[msg.sender] - serviceFee; // added service fee here
+        balance[_to] = balance[_to] + _value; 
         
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        emit Transfer(msg.sender, _to, _value);
-        return true;
+        emit TranferedTo(_value, _to);
+        return balance[msg.sender];
     }
 
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value, "Insufficient balance");
-        
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Transfer(msg.sender, address(0), _value);
-        return true;
+    function tokenBalance(address _address) public view returns(uint256){
+        return balance[_address];
     }
 
-    function mint(address _to, uint256 _value) public onlyOwner returns (bool success) {
-        require(_to != address(0), "Invalid address");
-        
-        totalSupply += _value;
-        balanceOf[_to] += _value;
-        emit Transfer(address(0), _to, _value);
-        return true;
+    function burn(uint256 amount) external {
+        _burn(_msgSender(), amount);
     }
+
+
 }
