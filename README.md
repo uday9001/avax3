@@ -1,9 +1,6 @@
-avax3
-Certainly! Below is a sample README file for the `TokenMint` smart contract you provided:
-
+# avax3
 ---
-
-# TokenMint Smart Contract
+## TokenMint Smart Contract
 
 The TokenMint smart contract is a basic implementation for creating and managing tokens on the Ethereum blockchain. It allows token minting, burning, and transfer functionalities.
 
