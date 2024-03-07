@@ -1,44 +1,36 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract SpecialContract is ERC20 {
+contract Token is ERC20 {
 
-    mapping(address=>uint256) balance;
+    address owner = msg.sender;
 
-    event TranferedTo (uint256 indexed _value, address indexed _to);
-
-    constructor(string memory _tokenName, string memory _symbol, uint256 _initialSupply) ERC20(_tokenName, _symbol) {
-        _mint(msg.sender, _initialSupply);
+    constructor() ERC20("TkToken", "TkT") {
+        // Mint initial supply to the contract deployer
+        _mint(msg.sender, 10 * 10**decimals());
     }
 
-     function mint(address account, uint256 amount) external  {
-        _mint(account, amount);
-    }
-    
-    //function to enable transfer from the contract including a service fee of 10%
-    function transferToken(uint256 _value, address _to) public returns(uint256){
-        // uint256 coinSupply = totalSupply;
-        require(balance[msg.sender] > _value, "You dont have enough SCT tokens in your account");
-        require(_value > 0, "token amount must be greater than zero");
-        require(msg.sender != address(0), "Check this address again. You cannnot send to this address!"); // performing a sanity check
-        uint256 serviceFee = _value /10;
-        balance[msg.sender] = balance[msg.sender] - serviceFee; // added service fee here
-        balance[_to] = balance[_to] + _value; 
-        
-        emit TranferedTo(_value, _to);
-        return balance[msg.sender];
+    modifier onlyOwner {
+        require(owner == msg.sender);
+        _;
     }
 
-    function tokenBalance(address _address) public view returns(uint256){
-        return balance[_address];
+    // Function to mint new tokens
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
     }
 
-    function burn(uint256 amount) external {
-        _burn(_msgSender(), amount);
+    // Function to burn tokens
+    function burn(uint256 amount) public {
+        _burn(msg.sender, amount);
     }
 
-
+    // Function to transfer tokens
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
 }
